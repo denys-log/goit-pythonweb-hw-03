@@ -2,6 +2,11 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 import urllib.parse
 import pathlib
 import mimetypes
+import json
+from datetime import datetime
+
+STORAGE_DIR = pathlib.Path("storage")
+STORAGE_FILE = STORAGE_DIR / "data.json"
 
 
 class HttpHandler(BaseHTTPRequestHandler):
@@ -19,16 +24,35 @@ class HttpHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         data = self.rfile.read(int(self.headers["Content-Length"]))
-        print(data)
         data_parse = urllib.parse.unquote_plus(data.decode())
-        print(data_parse)
         data_dict = {
             key: value for key, value in [el.split("=") for el in data_parse.split("&")]
         }
-        print(data_dict)
+
+        timestamp = datetime.now().isoformat()
+        self.save_data_to_json(timestamp, data_dict)
+
         self.send_response(302)
         self.send_header("Location", "/")
         self.end_headers()
+
+    def save_data_to_json(self, timestamp, data):
+        """Зберігає дані в файл data.json у вигляді {timestamp: data}"""
+        STORAGE_DIR.mkdir(exist_ok=True)
+
+        if STORAGE_FILE.exists():
+            with open(STORAGE_FILE, "r", encoding="utf-8") as file:
+                try:
+                    all_data = json.load(file)
+                except json.JSONDecodeError:
+                    all_data = {}
+        else:
+            all_data = {}
+
+        all_data[timestamp] = data
+
+        with open(STORAGE_FILE, "w", encoding="utf-8") as file:
+            json.dump(all_data, file, ensure_ascii=False, indent=4)
 
     def send_html_file(self, filename, status=200):
         self.send_response(status)
