@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Messages</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      h1 {
+        color: #333;
+      }
+      .message {
+        margin-bottom: 20px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        background-color: #f9f9f9;
+      }
+      .timestamp {
+        font-size: 0.9em;
+        color: #555;
+      }
+      .username {
+        font-weight: bold;
+        color: #007bff;
+      }
+      .text {
+        margin-top: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Saved Messages</h1>
+    {% if messages %} {% for timestamp, message in messages.items() %}
+    <div class="message">
+      <div class="timestamp">{{ timestamp }}</div>
+      <div class="username">{{ message.username }}</div>
+      <div class="text">{{ message.message }}</div>
+    </div>
+    {% endfor %} {% else %}
+    <p>No messages found.</p>
+    {% endif %}
+  </body>
+</html>

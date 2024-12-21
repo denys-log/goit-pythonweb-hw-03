@@ -4,6 +4,10 @@ import pathlib
 import mimetypes
 import json
 from datetime import datetime
+from jinja2 import Environment, FileSystemLoader
+
+env = Environment(loader=FileSystemLoader("."))
+template = env.get_template("read.html")
 
 STORAGE_DIR = pathlib.Path("storage")
 STORAGE_FILE = STORAGE_DIR / "data.json"
@@ -16,6 +20,8 @@ class HttpHandler(BaseHTTPRequestHandler):
             self.send_html_file("index.html")
         elif pr_url.path == "/message.html":
             self.send_html_file("message.html")
+        elif pr_url.path == "/read":
+            self.send_read_page()
         else:
             if pathlib.Path().joinpath(pr_url.path[1:]).exists():
                 self.send_static()
@@ -37,7 +43,6 @@ class HttpHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def save_data_to_json(self, timestamp, data):
-        """Зберігає дані в файл data.json у вигляді {timestamp: data}"""
         STORAGE_DIR.mkdir(exist_ok=True)
 
         if STORAGE_FILE.exists():
@@ -71,6 +76,25 @@ class HttpHandler(BaseHTTPRequestHandler):
         self.end_headers()
         with open(f".{self.path}", "rb") as file:
             self.wfile.write(file.read())
+
+    def send_read_page(self):
+        if STORAGE_FILE.exists():
+            with open(STORAGE_FILE, "r", encoding="utf-8") as file:
+                try:
+                    messages = json.load(file)
+                except json.JSONDecodeError:
+                    messages = {}
+        else:
+            messages = {}
+
+        template = env.get_template("read.html")
+
+        rendered_page = template.render(messages=messages)
+
+        self.send_response(200)
+        self.send_header("Content-type", "text/html")
+        self.end_headers()
+        self.wfile.write(rendered_page.encode("utf-8"))
 
 
 def run(server_class=HTTPServer, handler_class=HttpHandler):
